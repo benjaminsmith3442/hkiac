@@ -43,8 +43,8 @@ class DrawTools:
     def panel(self, x1, y1, x2, y2, snap_object):
         so_copy = copy.deepcopy(snap_object)
         self.__layer_rectangles(x1=x1, y1=y1, x2=x2, y2=y2, snap_object=so_copy)
-        self.__layer_rectangles(x1=x1 + 2, y1=y1, x2=x2 - 2, y2=y1 + 1, snap_object=so_copy.title)
-        self.terminal_text(x1 + 3, y1 + 1, so_copy.title.text, so_copy.title.text_color, bump_x=_PANEL_BUMP_X, bump_y=_PANEL_BUMP_Y)
+        if so_copy.title.text is not None:
+            self.terminal_text(x1 + 2, y1 + 1, so_copy.title.text, so_copy.title.text_color, bump_x=_PANEL_BUMP_X, bump_y=_PANEL_BUMP_Y, box_color=so_copy.title.box_color)
 
     def __mapper_selector(self, x, y, snap_object):
         so_copy = copy.deepcopy(snap_object)
@@ -96,8 +96,8 @@ class DrawTools:
                 self.__vertical_mapper(x, y, schema, mapper_height - 1, bit_mapped)
                 y += mapper_height
 
-    def terminal_text(self, x, y, text, color, bump_x=0, bump_y=0):
-        self.canvas.create_text(
+    def terminal_text(self, x, y, text, color, bump_x=0, bump_y=0, box_color=None):
+        text_id = self.canvas.create_text(
             x * _SNAP_SIZE + bump_x,
             y * _SNAP_SIZE + bump_y,
             text=text,
@@ -107,6 +107,12 @@ class DrawTools:
             anchor="sw",
             justify="left"
         )
+
+        if box_color is not None:
+            # self.canvas.create_rectangle()
+            x1, y1, x2, y2 = self.canvas.bbox(text_id)
+            rect_id = self.canvas.create_rectangle(x1 - _SNAP_SIZE, y1, x2 + _SNAP_SIZE, y2, fill=box_color, outline="") #TODO fix this up a bit
+            self.canvas.tag_raise(text_id, rect_id)
 
     def logic_gate(self, x, y, snap_object, bits=None):
         bits = bits or [0, 0, 0]
@@ -123,9 +129,9 @@ class DrawTools:
         self.__layer_rectangles(x1=x, y1=y, x2=x+2, y2=y+2, snap_object=so_copy)
         self.__layer_rectangles(x1=x, y1=y, x2=x + 2, y2=y + 2, snap_object=so_copy)
         self.terminal_text(x + 1, y + 2, so_copy.label, label_color)
-        self.switch(x, y, snap_object.switch_a, bit=bits[0], alignments=so_copy.switch_a.alignments)
-        self.switch(x+2, y, snap_object.switch_b, bit=bits[1], alignments=so_copy.switch_b.alignments)
-        self.switch(x+1, y+2, snap_object.switch_c, bit=bits[2], alignments=so_copy.switch_c.alignments)
+        self.switch(x, y + 2, snap_object.switch_a, bit=bits[0], alignments=so_copy.switch_a.alignments)
+        self.switch(x, y, snap_object.switch_b, bit=bits[1], alignments=so_copy.switch_b.alignments)
+        self.switch(x+2, y+1, snap_object.switch_c, bit=bits[2], alignments=so_copy.switch_c.alignments)
 
     # def hkiac(self, x, y, tk, img):
     #     x_coord = 1440

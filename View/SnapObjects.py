@@ -76,9 +76,9 @@ class LogicGate:
         self.inactive_label_color = inactive_label_color
         self.active_colors = active_colors
         self.inactive_colors = inactive_colors
-        self.switch_a = LogicGate.Switch([GREY, BLACK, WHITE], [GREY, BLACK, BLACK], ['NW', 'NW', 'N'])
-        self.switch_b = LogicGate.Switch([GREY, BLACK, WHITE], [GREY, BLACK, BLACK], ['NE', 'NE', 'N'])
-        self.switch_c = LogicGate.Switch([GREY, BLACK, WHITE], [GREY, BLACK, BLACK], ['S', 'S', 'S'])
+        self.switch_a = LogicGate.Switch([ORANGE, BLACK, WHITE], [ORANGE, BLACK, BLACK], ['SW', 'SW', 'W'])
+        self.switch_b = LogicGate.Switch([ORANGE, BLACK, WHITE], [ORANGE, BLACK, BLACK], ['NW', 'NW', 'W'])
+        self.switch_c = LogicGate.Switch([ORANGE, BLACK, WHITE], [ORANGE, BLACK, BLACK], ['E', 'E', 'E'])
         self.label = label
         self.load_as_active()
 
@@ -91,10 +91,11 @@ class LogicGate:
 class Panel:
     class Title:
         def __init__(self, title_text, title_color):
-            self.colors = [BLACK]
-            self.offsets = [0]
+            self.colors = [BLACK] #TODO am i using this?
+            self.offsets = [0]    #TODO or this?
             self.text = title_text
             self.text_color = title_color
+            self.box_color = BLACK
 
     def __init__(self, colors, title_text, title_color):
         self.colors = colors
@@ -106,20 +107,26 @@ class Panel:
 #       Im looking at you Panel objects 0_0
 SWITCH              =   SwitchBoard([GREY, BLACK, WHITE], [GREY, BLACK, BLACK])
 SWITCH_INACTIVE     =   SwitchBoard([GREY_DARKER, BLACK, WHITE],[GREY_DARKER, BLACK, BLACK])
-OPCODE_SWITCH       =   SwitchBoard([ORANGE, BLACK, WHITE],[ORANGE, BLACK, BLACK])
+OPCODE_SWITCH       =   SwitchBoard([YELLOW, BLACK, WHITE],[YELLOW, BLACK, BLACK])
 MEMORY_SWITCH       =   SwitchBoard([LIGHT_BLUE, BLACK, WHITE], [LIGHT_BLUE, BLACK, BLACK])
 NUMERIC_SWITCH      =   SwitchBoard([GREEN, BLACK, WHITE], [GREEN, BLACK, BLACK])
 REGISTER_SWITCH     =   SwitchBoard([RED, BLACK, WHITE], [RED, BLACK, BLACK])
-# FLAG_SWITCH         =   SwitchBoard([PURPLE, BLACK, BLACK])
+FLAG_SWITCH         =   SwitchBoard([ORANGE, BLACK, WHITE], [ORANGE, BLACK, BLACK])
 # PERIPHERAL_SWITCH   =   SwitchBoard([ORANGE, BLACK, BLACK])
 COUNTER_SWITCH      =   SwitchBoard([GREY, BLACK, WHITE], [GREY, BLACK, BLACK])
 
-NUMERIC_SWITCH_MAPPER   =   SwitchMapper([BLACK, BLACK], [BLACK, GREY_DARK], COUNTER_SWITCH, [BLACK, GREY_DARK, GREY_DARK])
+INSTRUCTION_SWITCH_MAPPER   =   SwitchMapper([BLACK, BLACK], [BLACK, WHITE], COUNTER_SWITCH, [BLACK, GREY_DARK, GREY_DARK])
+MEMORY_SWITCH_MAPPER    =   SwitchMapper([BLACK, BLACK], [BLACK, LIGHT_BLUE], MEMORY_SWITCH, [BLACK, GREY_DARK, GREY_DARK])
+REGISTER_SWITCH_MAPPER    =   SwitchMapper([BLACK, BLACK], [BLACK, RED], COUNTER_SWITCH, [BLACK, GREY_DARK, GREY_DARK])
 
-LOGIC_GATE_XOR = LogicGate(WHITE, BLACK,[GREEN, BLACK],[GREY, BLACK],"XOR")
-LOGIC_GATE_AND = LogicGate(WHITE, BLACK,[GREEN, BLACK],[GREY, BLACK], "AND")
-LOGIC_GATE_OR = LogicGate(WHITE, BLACK, [GREEN, BLACK],[GREY, BLACK], "OR")
+#TODO lot of args with perfect parity in this one
+LOGIC_GATE_XOR  =   LogicGate(WHITE, BLACK,[ORANGE, BLACK],[ORANGE, BLACK],"XOR")
+LOGIC_GATE_AND  =   LogicGate(WHITE, BLACK,[ORANGE, BLACK],[ORANGE, BLACK], "AND")
+LOGIC_GATE_OR   =   LogicGate(WHITE, BLACK, [ORANGE, BLACK],[ORANGE, BLACK], "OR")
 
-ALU_PANEL = Panel([GREEN, BLACK, GREEN, BLACK], 'ARITHMETIC LOGIC UNIT', WHITE)
-MEMORY_PANEL = Panel([LIGHT_BLUE, BLACK, LIGHT_BLUE, BLACK], 'MEMORY', WHITE)
-REGISTER_PANEL = Panel([RED, BLACK, RED, BLACK], 'REGISTERS', WHITE)
+ALU_PANEL           =   Panel([GREEN, BLACK, GREEN, BLACK], 'ARITHMETIC LOGIC UNIT', GREEN)
+MEMORY_PANEL        =   Panel([LIGHT_BLUE, BLACK, LIGHT_BLUE, BLACK], 'MEMORY', LIGHT_BLUE)
+REGISTER_PANEL      =   Panel([RED, BLACK, RED, BLACK], 'REGISTERS', RED)
+IO_PANEL            =   Panel([WHITE, BLACK, WHITE, BLACK], None, WHITE)
+FLAG_PANEL          =   Panel([ORANGE, BLACK, ORANGE, BLACK], 'FLAGS', ORANGE)
+INSTRUCTION_PANEL   =   Panel([GREY_LIGHT, BLACK, GREY_LIGHT, BLACK], 'INSTRUCTIONS', WHITE)

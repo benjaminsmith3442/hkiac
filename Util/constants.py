@@ -13,6 +13,10 @@ class Constants:
     _m2 = 'M2'
     _m3 = 'M3'
     _m4 = 'M4'
+    _m5 = 'M5'
+    _m6 = 'M6'
+    _m7 = 'M7'
+    _m8 = 'M8'
     _zero = 'ZERO'
     _overflow = 'OVERFLOW'
     _all = 'ALL'
@@ -21,9 +25,9 @@ class Constants:
     _valid_register = [_r1, _r2]
     _valid_memory = [_m1, _m2, _m3, _m4]
 
-    INSTRUCTION_COUNT = 32
+    INSTRUCTION_COUNT = 16
     OP_CODE_INSTRUCTION_SIZE = 4
-    IMMEDIATE_INSTRUCTION_SIZE = 8
+    IMMEDIATE_INSTRUCTION_SIZE = 5
     MEMORY_INSTRUCTION_SIZE = 2
     REGISTER_INSTRUCTION_SIZE = 1
     INSTRUCTION_WIDTHS = [
