@@ -27,8 +27,6 @@ class DrawTools:
             offset_north = 0 if ('N' in alignment) else offset
             offset_south = 0 if ('S' in alignment) else offset
 
-            # print('W', offset_west, 'E', offset_east, 'N', offset_north, 'S', offset_south)
-
             self.canvas.create_rectangle(
                 x1 + offset_west, y1 + offset_north,
                 x2 - offset_east + _SNAP_SIZE, y2 - offset_south + _SNAP_SIZE,
@@ -138,84 +136,26 @@ class DrawTools:
         self.switch(x + 1, y + 2, snap_object.switch_c, bit=bits[2], alignments=['', 'SE', 'SE'])
         self.switch(x + 2, y + 2, snap_object.switch_c, bit=bits[2], alignments=['', 'SW', 'SW'])
 
-    # self.mapped_tiles[node_key - 2] = {
-    #     'x': node_a['x'],
-    #     'y': node_a['y'],
-    #     'line_alignment': line_alignment,
-    #     'elbow_alignment': elbow_alignment,
-    #     'length': distance,
-    #     'direction': direction
-    # }
+    def draw_free_lines(self, snap_object, nodes):
+        sc = copy.deepcopy(snap_object)
 
-    # def draw_free_lines(self, snap_object):
-    #     so_copy = copy.deepcopy(snap_object)
-    #
-    #     for tile in so_copy.tile_map:
-    #         x_elbow = 0
-    #         x1_line = 0
-    #         x2_line = 0
-    #         y_elbow = 0
-    #         y1_line = 0
-    #         y2_line = 0
-    #
-    #         #TODO a lot of this can seriously go into the map itself
-    #         # print('line',tile['line_alignment'])
-    #         # print('elbow',tile['elbow_alignment'])
-    #         # print('')
-    #
-    #         if tile['direction'] == Constants.DOWN:
-    #             x_elbow = tile['length']
-    #             y_elbow = tile['y'] + tile['length']
-    #             x1_line = tile['x']
-    #             y1_line = tile['y']
-    #             x2_line = tile['x']
-    #             y2_line = tile['y'] + tile['length'] - 1
-    #
-    #         if tile['direction'] == Constants.UP:
-    #             x_elbow = tile['length']
-    #             y_elbow = tile['y'] - tile['length']
-    #             x1_line = tile['x']
-    #             y1_line = tile['y'] - tile['length'] + 1
-    #             x2_line = tile['x']
-    #             y2_line = tile['y']
-    #
-    #         if tile['direction'] == Constants.LEFT:
-    #             x_elbow = tile['x'] - tile['length']
-    #             y_elbow = tile['length']
-    #             x1_line = tile['x'] - tile['length'] + 1
-    #             y1_line = tile['y']
-    #             x2_line = tile['x']
-    #             y2_line = tile['y']
-    #
-    #         if tile['direction'] == Constants.RIGHT:
-    #             x_elbow = tile['x'] + tile['length']
-    #             y_elbow = tile['length']
-    #             x1_line = tile['x']
-    #             y1_line = tile['y']
-    #             x2_line = tile['x'] + tile['length'] + 1
-    #             y2_line = tile['y']
-    #
-    #         # print(tile['x'],', ',tile['y'],',',tile['x'] + x_line, ',', tile['y'] + y_line)
-    #
-    #         self.__layer_rectangles(
-    #             x1=x1_line,
-    #             y1=tile['y'] + y1_line,
-    #             x2=tile['x'] + x2_line,
-    #             y2=tile['y'] + y2_line,
-    #             snap_object=so_copy,
-    #             alignments=['', tile['line_alignment']]
-    #         )
+        for _sc in [sc.outer_line, sc]:
+            index = 0
 
-            # self.__layer_rectangles(
-            #     x1=tile['x'] + x_length,
-            #     y1=tile['y'] + y_length,
-            #     x2=tile['x'] + x_length,
-            #     y2=tile['y'] + y_length,
-            #     snap_object=so_copy,
-            #     alignments=tile['elbow_alignment']
-            # )
+            while index + 1 in nodes:
+                x1 = nodes[index]['x']
+                y1 = nodes[index]['y']
+                x2 = nodes[index + 1]['x']
+                y2 = nodes[index + 1]['y']
 
+                if x1 > x2:
+                    x1, x2 = x2, x1
+                if y1 > y2:
+                    y1, y2 = y2, y1
 
+                self.__layer_rectangles(x1=x1, y1=y1, x2=x2, y2=y2, snap_object=_sc)
+
+                index += 1
 
     # def hkiac(self, x, y, tk, img):
     #     x_coord = 1440

@@ -16,108 +16,16 @@ from View.Palette import (
 
 #TODO A lot of the exact same method signature. Add inheritance. No rush. Just whenever
 
-# class FreeLines:
-#     def __init__(self, color, nodes): #TODO Make tile_map a nested class
-#         self.colors = [color, BLACK]
-#         self.offsets = [0, 4]
-#         self.nodes = nodes
-#         self.tile_map = []
-#         self.map_tiles()
-#
-#     def map_tiles(self):
-#         node_key = 2
-#         first_iteration = True
-#
-#         while True:
-#             node_a = self.nodes[node_key - 2]
-#             node_b = self.nodes[node_key - 1]
-#             node_c = self.nodes[node_key]
-#
-#             line_alignment = ''
-#             elbow_alignment = ''
-#             direction = ''
-#             length = 0
-#
-#             if node_a['x'] == node_b['x']:
-#                 length = node_a['y'] - node_b['y']
-#
-#                 if length > 0:
-#                     direction = Constants.UP
-#                     elbow_alignment += 'S'
-#                 else:
-#                     direction = Constants.DOWN
-#                     elbow_alignment += 'N'
-#                 elbow_alignment += 'W' if node_b['x'] < node_c['x'] else 'E'
-#
-#                 line_alignment = 'NS'
-#
-#                 if not first_iteration:
-#                     node_a['y'] += -1 if length > 0 else 1
-#             else:
-#                 length = node_a['x'] - node_b['x']
-#
-#                 if length > 0:
-#                     direction = Constants.LEFT
-#                     elbow_alignment += 'E'
-#                 else:
-#                     direction = Constants.RIGHT
-#                     elbow_alignment += 'W'
-#                 elbow_alignment += 'S' if node_b['y'] < node_c['y'] else 'N'
-#
-#                 line_alignment = 'WE'
-#
-#                 if not first_iteration:
-#                     node_a['x'] += -1 if length > 0 else 1
-#
-#             length = abs(length)
-#
-#             self.tile_map.append({
-#                 'x': node_a['x'],
-#                 'y': node_a['y'],
-#                 'line_alignment': line_alignment,
-#                 'elbow_alignment': elbow_alignment,
-#                 'length': length,
-#                 'direction': direction
-#             })
-#
-#             node_key += 1
-#             first_iteration = False
-#
-#             if node_key not in self.nodes:
-#                 if node_b['x'] == node_c['x']:
-#                     length = node_b['y'] - node_c['y']
-#                     if length > 0:
-#                         direction = Constants.UP
-#                     else:
-#                         direction = Constants.DOWN
-#
-#                     line_alignment = 'NS'
-#
-#                     node_b['y'] += -1 if length > 0 else 1
-#                 else:
-#                     length = node_b['x'] - node_c['x']
-#
-#                     if length > 0:
-#                         direction = self.up
-#                     else:
-#                         direction = self.down
-#
-#                     line_alignment = 'WE'
-#
-#                     node_b['x'] += -1 if length > 0 else 1
-#
-#                 length = abs(length)
-#
-#                 self.tile_map.append({
-#                     'x': node_b['x'],
-#                     'y': node_b['y'],
-#                     'line_alignment': line_alignment,
-#                     'elbow_alignment': elbow_alignment,
-#                     'length': length,
-#                     'direction': direction
-#                 })
-#
-#                 break
+class FreeLines:
+    class OuterLine:
+        def __init__(self):
+            self.colors = [BLACK]
+            self.offsets = [0]
+
+    def __init__(self, color):
+        self.colors = [color]
+        self.offsets = [9]
+        self.outer_line = FreeLines.OuterLine()
 
 class SwitchBoard:
     def __init__(self, active_colors, inactive_colors):
@@ -236,17 +144,13 @@ REGISTER_PANEL      =   Panel([RED, BLACK, RED, BLACK], 'REGISTERS', TEST_RED)
 HKIAC_PANEL         =   Panel([WHITE, BLACK, WHITE, BLACK], None, None)
 FLAG_PANEL          =   Panel([PURPLE, BLACK, PURPLE, BLACK], 'FLAGS', "violet")
 INSTRUCTION_PANEL   =   Panel([GREY_LIGHT, BLACK, GREY_LIGHT, BLACK], 'MACHINE INSTRUCTIONS', WHITE)
-OPCODE_PANEL        =   Panel([GREEN, BLACK, GREEN, BLACK], 'CONTROL LOGIC', "lime")
+OPCODE_PANEL        =   Panel([GREEN, BLACK, GREEN, BLACK], 'CONTROL UNIT', "lime")
 IO_PANEL            =   Panel([WHITE, BLACK, WHITE, BLACK], None, None)
 BLACKOUT            =   Panel([BLACK, BLACK, BLACK, BLACK], None, None)
 
+# TODO i think separating coordinates to the main file is good. This class should only describe object properties. Not their 'moldable' layout
 
-# spiral = {
-#     0: {'x': 5, 'y': 5},
-#     1: {'x': 15, 'y': 5},
-#     2: {'x': 15, 'y': 15},
-#     3: {'x': 5, 'y': 15},
-#     4: {'x': 5, 'y': 7}
-# }
-# SPIRAL_FREE_LINE = FreeLines(WHITE, spiral)
+CARRY_IN_FREELINE = FreeLines(PURPLE)
+INPUT_A_FREELINE = FreeLines(ORANGE)
+INPUT_B_FREELINE = FreeLines(RED)
 

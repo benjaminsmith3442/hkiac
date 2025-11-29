@@ -67,7 +67,7 @@ def draw_screen():
         x_coord = x
         y_coord = y
 
-        draw.panel(x_coord, y_coord, x_coord + 18, y_coord + 12, SnapObjects.HKIAC_PANEL)
+        draw.panel(x_coord, y_coord, x_coord + 18, y_coord + 7, SnapObjects.HKIAC_PANEL)
 
     def draw_hints(): pass
         # draw.terminal_text(35, 3, f"[{Arrows.UP}][{Arrows.DOWN}]", 'WHITE')
@@ -76,36 +76,59 @@ def draw_screen():
         x_coord = x
         y_coord = y
 
-        draw.panel(x_coord, y_coord, x_coord + 9, y_coord + 18, SnapObjects.OPCODE_PANEL)
+        draw.panel(x_coord, y_coord, x_coord + 8, y_coord + 10, SnapObjects.OPCODE_PANEL)
 
-        TEMP = [0, 0, 1, 1]
+        TEMP = [0, 0, 1]
         draw.switch_mapper_board(x_coord, y_coord + 1, TEMP, SnapObjects.OPCODE_SWITCH_MAPPER)
 
         for i, opcode in enumerate(Constants.OPCODE_ORDER):
             opcode = opcode + ((3 - len(opcode)) * ' ')
-            draw.terminal_text(x_coord + 7, 3 + i, f"[{opcode}]", "lime", bump_y=-5)
+            draw.terminal_text(x_coord + 6, 3 + i, f"[{opcode}]", "lime", bump_y=-5)
 
         null_opcodes = 2 ** Constants.OP_CODE_INSTRUCTION_SIZE - len(Constants.OPCODE_ORDER)
         available_opcodes = 2 ** Constants.OP_CODE_INSTRUCTION_SIZE
 
         for i in range(null_opcodes, available_opcodes):
             null_opcode = 3 * ' '
-            draw.terminal_text(x_coord + 7, 3 + i, f"[{null_opcode}]", "lime", bump_y=-5)
+            draw.terminal_text(x_coord + 6, 3 + i, f"[{null_opcode}]", "lime", bump_y=-5)
 
     def draw_alu_panel(x, y):
         x_coord = x
         y_coord = y
-        gate_x = x_coord + 4
-        gate_y = y_coord + 4
+        gate_x = x_coord + 2
+        gate_y = y_coord + 8
 
-        draw.panel(x_coord, y_coord, x_coord + 19, y_coord + 16, SnapObjects.ALU_PANEL)
+        draw.panel(x_coord, y_coord, x_coord + 18, y_coord + 23, SnapObjects.ALU_PANEL)
+
+        _carry_in = {
+            0: {'x': gate_x + 4, 'y': gate_y + 2},
+            1: {'x': gate_x + 4, 'y': gate_y - 2},
+            2: {'x': gate_x + 11, 'y': gate_y - 2},
+            3: {'x': gate_x + 11, 'y': gate_y + 2},
+        }
+        _a = {
+            0: {'x': gate_x, 'y': gate_y + 2},
+            1: {'x': gate_x, 'y': gate_y - 4},
+            2: {'x': gate_x + 6, 'y': gate_y - 4},
+            3: {'x': gate_x + 6, 'y': gate_y - 1},
+        }
+        _b = {
+            0: {'x': gate_x + 3, 'y': gate_y + 2},
+            1: {'x': gate_x + 3, 'y': gate_y - 3},
+            2: {'x': gate_x + 9, 'y': gate_y - 3},
+            3: {'x': gate_x + 9, 'y': gate_y - 1},
+        }
+
+        draw.draw_free_lines(SnapObjects.INPUT_A_FREELINE, _a)
+        draw.draw_free_lines(SnapObjects.INPUT_B_FREELINE, _b)
+        draw.draw_free_lines(SnapObjects.CARRY_IN_FREELINE, _carry_in)
 
 
         gate_row = 3
         draw.logic_gate(gate_x + 6, gate_y + (0 * gate_row), SnapObjects.LOGIC_GATE_XOR, [1, 1, 1])
-        draw.logic_gate(gate_x + 0, gate_y + (1 * gate_row), SnapObjects.LOGIC_GATE_XOR, [1, 1, 1])
+        draw.logic_gate(gate_x + 8, gate_y + (1 * gate_row), SnapObjects.LOGIC_GATE_XOR, [1, 1, 1])
         draw.logic_gate(gate_x + 4, gate_y + (1 * gate_row), SnapObjects.LOGIC_GATE_AND, [1, 1, 1])
-        draw.logic_gate(gate_x + 8, gate_y + (1 * gate_row), SnapObjects.LOGIC_GATE_AND, [1, 1, 1])
+        draw.logic_gate(gate_x + 0, gate_y + (1 * gate_row), SnapObjects.LOGIC_GATE_AND, [1, 1, 1])
         draw.logic_gate(gate_x + 2, gate_y + (2 * gate_row), SnapObjects.LOGIC_GATE_OR, [1, 1, 1])
 
     def draw_memory_panel(x, y): #TODO this is very static. Need it to be malleable, rubbery, maybe flubbery
@@ -166,9 +189,9 @@ def draw_screen():
         x_coord = x
         y_coord = y
 
-        draw.panel(x_coord, y_coord, x_coord + 18, y_coord + 4, SnapObjects.FLAG_PANEL)
+        draw.panel(x_coord, y_coord, x_coord + 5, y_coord + 12, SnapObjects.FLAG_PANEL)
 
-        draw.logic_gate(x_coord + 4, y_coord + 1, SnapObjects.LOGIC_GATE_OR, [1, 0, 1])
+        draw.logic_gate(x_coord + 1, y_coord + 5, SnapObjects.LOGIC_GATE_OR, [1, 0, 1])
 
     def draw_instruction_panel(x, y):
         x_coord = x
@@ -212,14 +235,12 @@ def draw_screen():
     draw_hkiac_panel(33, 1)
     draw_instruction_panel(1, 1)
     draw_hints()
-    draw_alu_panel(1, 21)
-    draw_memory_panel(33, 21)
-    draw_register_panel(33, 29)
-    draw_flag_panel(33, 15)
+    draw_alu_panel(33, 10)
+    draw_memory_panel(1, 21)
+    draw_register_panel(15, 21)
+    draw_flag_panel(26, 21)
     draw_opcode_panel(22,1)
     # draw_io_panel(49,21)
-
-
 
 
 

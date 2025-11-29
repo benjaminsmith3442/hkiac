@@ -26,7 +26,7 @@ class Constants:
     _valid_memory = [_m1, _m2, _m3, _m4]
 
     INSTRUCTION_COUNT = 16
-    OP_CODE_INSTRUCTION_SIZE = 4
+    OP_CODE_INSTRUCTION_SIZE = 3
     IMMEDIATE_INSTRUCTION_SIZE = 5
     MEMORY_INSTRUCTION_SIZE = 2
     REGISTER_INSTRUCTION_SIZE = 1
@@ -49,14 +49,14 @@ class Constants:
     }
     ASM_TO_BIN = {
         # Operation Codes
-        _ldr:       [0, 0, 1, 0],
-        _str:       [0, 1, 0, 0],
-        _add:       [0, 1, 1, 0],
-        _inv:       [1, 0, 0, 0],
-        _mov:       [1, 0, 1, 0],
-        _uf:        [1, 1, 0, 0],
-        _jmp:       [1, 1, 1, 0],
-        _io:        [0, 0, 0, 0],
+        _ldr:       [0, 0, 1],
+        _str:       [0, 1, 0],
+        _add:       [0, 1, 1],
+        _inv:       [1, 0, 0],
+        _mov:       [1, 0, 1],
+        _uf:        [1, 1, 0],
+        _jmp:       [1, 1, 1],
+        _io:        [0, 0, 0],
 
         # Registers
         _r1:        [0],
