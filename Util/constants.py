@@ -68,10 +68,22 @@ class Constants:
         _m3:        [1, 0],
         _m4:        [1, 1]
     }
+    # Binary to Int order
+    OPCODE_ORDER = {
+        _ldr,
+        _str,
+        _add,
+        _inv,
+        _mov,
+        _uf,
+        _jmp,
+        _io
+    }
 
-
-
-
+    UP = 'u'
+    DOWN = 'd'
+    LEFT = 'l'
+    RIGHT = 'r'
 
 
 
