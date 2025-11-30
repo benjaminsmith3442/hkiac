@@ -24,7 +24,7 @@ class FreeLines:
 
     def __init__(self, color):
         self.colors = [color]
-        self.offsets = [9]
+        self.offsets = [7]
         self.outer_line = FreeLines.OuterLine()
 
 class SwitchBoard:
@@ -123,10 +123,12 @@ SWITCH_INACTIVE     =   SwitchBoard([GREY_DARKER, BLACK, WHITE],[GREY_DARKER, BL
 OPCODE_SWITCH       =   SwitchBoard([GREEN, BLACK, WHITE],[GREEN, BLACK, BLACK])
 MEMORY_SWITCH       =   SwitchBoard([LIGHT_BLUE, BLACK, WHITE], [LIGHT_BLUE, BLACK, BLACK])
 NUMERIC_SWITCH      =   SwitchBoard([WHITE, BLACK, WHITE], [WHITE, BLACK, BLACK])
-REGISTER_SWITCH     =   SwitchBoard([TEST_RED, BLACK, WHITE], [TEST_RED, BLACK, BLACK])
+REGISTER_AB_SWITCH  =   SwitchBoard([TEST_RED, BLACK, WHITE], [TEST_RED, BLACK, BLACK])
+REGISTER_C_SWITCH   =SwitchBoard([ORANGE, BLACK, WHITE], [ORANGE, BLACK, BLACK])
 FLAG_SWITCH         =   SwitchBoard([ORANGE, BLACK, WHITE], [ORANGE, BLACK, BLACK])
 # PERIPHERAL_SWITCH   =   SwitchBoard([ORANGE, BLACK, BLACK])
 COUNTER_SWITCH      =   SwitchBoard([GREY, BLACK, WHITE], [GREY, BLACK, BLACK])
+CARRY_SWITCH        =   SwitchBoard([PURPLE, BLACK, WHITE], [PURPLE, BLACK, BLACK])
 
 INSTRUCTION_SWITCH_MAPPER   =   SwitchMapper([BLACK, BLACK], [BLACK, WHITE], COUNTER_SWITCH, [BLACK, GREY_DARK, GREY_DARK])
 MEMORY_SWITCH_MAPPER        =   SwitchMapper([BLACK, BLACK], [BLACK, BLUE], MEMORY_SWITCH, [BLACK, GREY_DARK, GREY_DARK])
@@ -151,6 +153,6 @@ BLACKOUT            =   Panel([BLACK, BLACK, BLACK, BLACK], None, None)
 # TODO i think separating coordinates to the main file is good. This class should only describe object properties. Not their 'moldable' layout
 
 CARRY_IN_FREELINE = FreeLines(PURPLE)
-INPUT_A_FREELINE = FreeLines(ORANGE)
-INPUT_B_FREELINE = FreeLines(RED)
+INPUT_A_FREELINE = FreeLines(TEST_RED)
+INPUT_B_FREELINE = FreeLines(TEST_RED)
 

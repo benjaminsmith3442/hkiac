@@ -1,7 +1,10 @@
+import copy
 import math
 import os
 import sys
 import tkinter as tk
+from warnings import deprecated
+
 from PIL import ImageTk
 from PIL.Image import Palette
 
@@ -12,9 +15,11 @@ from Components.Memory import Memory
 from PIL import Image
 import View.DrawTools as DrawTools
 import View.SnapObjects as SnapObjects
-from View.Palette import WHITE, GREEN, TEST_RED, LIGHT_BLUE
+from View.Palette import WHITE, GREEN, TEST_RED, LIGHT_BLUE, ORANGE
 
 # from View.SnapObjects import SPIRAL_FREE_LINE
+
+#TODO consider a layout class that abstracts the drawing class. Def get it all out of here though
 
 if (len(sys.argv) == 2) and os.path.isfile(sys.argv[1]):
     Instructions.populate_instructions_from_file(sys.argv[1])
@@ -35,7 +40,7 @@ INSTRUCTION_SWITCHES = [
     SnapObjects.OPCODE_SWITCH,
     SnapObjects.MEMORY_SWITCH,
     SnapObjects.NUMERIC_SWITCH,
-    SnapObjects.REGISTER_SWITCH
+    SnapObjects.REGISTER_AB_SWITCH
 ]
 for i, width in enumerate(Constants.INSTRUCTION_WIDTHS):
     for j in range(width):
@@ -92,13 +97,31 @@ def draw_screen():
             null_opcode = 3 * ' '
             draw.terminal_text(x_coord + 6, 3 + i, f"[{null_opcode}]", "lime", bump_y=-5)
 
-    def draw_alu_panel(x, y):
+    def draw_alu_panel(x, y): #TODO segment the individual groupings into nested methods. Do the same elsewhere
         x_coord = x
         y_coord = y
-        gate_x = x_coord + 2
-        gate_y = y_coord + 8
+        gate_x = x_coord + 1
+        gate_y = y_coord + 10
+        alu_input_x = x_coord + 9
+        alu_input_y = y_coord + 1
 
-        draw.panel(x_coord, y_coord, x_coord + 18, y_coord + 23, SnapObjects.ALU_PANEL)
+        draw.panel(x_coord, y_coord, x_coord + 14, y_coord + 23, SnapObjects.ALU_PANEL)
+
+        register_a = [0, 0, 0, 0, 0]
+        register_b = [0, 1, 1, 1, 0]
+        carry = [1, 0]
+        register_a_switch = copy.deepcopy(SnapObjects.REGISTER_AB_SWITCH)
+        register_b_switch = copy.deepcopy(SnapObjects.REGISTER_AB_SWITCH)
+        carry_switch = copy.deepcopy(SnapObjects.CARRY_SWITCH)
+
+        alu_inputs = [register_a, register_b, carry]
+        switch_styles = [register_a_switch, register_b_switch, carry_switch]
+
+        for i, (alu_input, switch_style) in enumerate(zip(alu_inputs, switch_styles)):
+            for j, bit in enumerate(alu_input):
+                switch_value = bit == 1
+                if j > 0: switch_style = SnapObjects.SWITCH
+                draw.switch(alu_input_x + j, alu_input_y + i, switch_style, switch_value)
 
         _carry_in = {
             0: {'x': gate_x + 4, 'y': gate_y + 2},
@@ -123,13 +146,12 @@ def draw_screen():
         draw.draw_free_lines(SnapObjects.INPUT_B_FREELINE, _b)
         draw.draw_free_lines(SnapObjects.CARRY_IN_FREELINE, _carry_in)
 
-
         gate_row = 3
-        draw.logic_gate(gate_x + 6, gate_y + (0 * gate_row), SnapObjects.LOGIC_GATE_XOR, [1, 1, 1])
-        draw.logic_gate(gate_x + 8, gate_y + (1 * gate_row), SnapObjects.LOGIC_GATE_XOR, [1, 1, 1])
-        draw.logic_gate(gate_x + 4, gate_y + (1 * gate_row), SnapObjects.LOGIC_GATE_AND, [1, 1, 1])
-        draw.logic_gate(gate_x + 0, gate_y + (1 * gate_row), SnapObjects.LOGIC_GATE_AND, [1, 1, 1])
-        draw.logic_gate(gate_x + 2, gate_y + (2 * gate_row), SnapObjects.LOGIC_GATE_OR, [1, 1, 1])
+        draw.logic_gate(gate_x + 6, gate_y + (0 * gate_row), SnapObjects.LOGIC_GATE_XOR, [0, 0, 0])
+        draw.logic_gate(gate_x + 8, gate_y + (1 * gate_row), SnapObjects.LOGIC_GATE_XOR, [0, 0, 0])
+        draw.logic_gate(gate_x + 4, gate_y + (1 * gate_row), SnapObjects.LOGIC_GATE_AND, [0, 0, 0])
+        draw.logic_gate(gate_x + 0, gate_y + (1 * gate_row), SnapObjects.LOGIC_GATE_AND, [0, 0, 0])
+        draw.logic_gate(gate_x + 2, gate_y + (2 * gate_row), SnapObjects.LOGIC_GATE_OR, [0, 0, 0])
 
     def draw_memory_panel(x, y): #TODO this is very static. Need it to be malleable, rubbery, maybe flubbery
         x_coord = x
@@ -166,17 +188,19 @@ def draw_screen():
         draw.panel(x_coord, y_coord, x_coord + 8, y_coord + 4, SnapObjects.REGISTER_PANEL)
         draw.terminal_text(x_coord+1, y_coord+2, '[R0]', TEST_RED) #TODO Im betting this can go warm n snugly into the mapper board class
         draw.terminal_text(x_coord+1, y_coord+3, '[R1]', TEST_RED)
-        draw.terminal_text(x_coord+1, y_coord+4, '[R2]', TEST_RED)
+        draw.terminal_text(x_coord+1, y_coord+4, '[R2]', ORANGE)
 
         registers = [
-            [0, 0, 0, 1, 0],
-            [0, 0, 0, 1, 0],
+            [0, 0, 0, 0, 0],
+            [0, 1, 1, 1, 0],
             [0, 0, 0, 1, 0]
         ]
         for i, register in enumerate(registers):
+            _register_switch = copy.deepcopy(SnapObjects.REGISTER_C_SWITCH) if (i == len(registers) - 1) else copy.deepcopy(SnapObjects.REGISTER_AB_SWITCH)
+
             for j, bit in enumerate(register):
                 switch_value = bit == 1
-                draw.switch(x_coord + 3 + j, y_coord + 1 + i, SnapObjects.REGISTER_SWITCH, switch_value)
+                draw.switch(x_coord + 3 + j, y_coord + 1 + i, _register_switch, switch_value)
 
     def draw_io_panel(x, y):
         x_coord = x
@@ -235,7 +259,7 @@ def draw_screen():
     draw_hkiac_panel(33, 1)
     draw_instruction_panel(1, 1)
     draw_hints()
-    draw_alu_panel(33, 10)
+    draw_alu_panel(32, 12)
     draw_memory_panel(1, 21)
     draw_register_panel(15, 21)
     draw_flag_panel(26, 21)
