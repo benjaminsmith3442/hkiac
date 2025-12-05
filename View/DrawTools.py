@@ -55,11 +55,18 @@ class DrawTools:
         self.__layer_rectangles(x1=x, y1=y, x2=x, y2=y, snap_object=so_copy['left'], alignments=east_alignments)
         self.__layer_rectangles(x1=x+1, y1=y, x2=x+1, y2=y, snap_object=so_copy['right'], alignments=west_alignments)
 
-    # def __horizontal_mapper(self, x, y, snap_object, length, bit=0):
+    def __horizontal_mapper(self, x, y, snap_object, length, bit=0):
     #     so_copy = copy.deepcopy(snap_object)
     #     if not bit: so_copy.colors[-1] = GREY_DARK
     #     x2 = x + length
     #     self.__layer_rectangles(x1=x, y1=y, x2=x2, y2=y, snap_object=so_copy)
+        so_copy = copy.deepcopy(snap_object)
+        if bit:
+            so_copy.load_as_active()
+        else:
+            so_copy.load_as_inactive()
+        x2 = x + length
+        self.__layer_rectangles(x1=x, y1=y, x2=x2, y2=y, snap_object=so_copy)
 
     def __vertical_mapper(self, x, y, snap_object, length, bit=0):
         so_copy = copy.deepcopy(snap_object)
@@ -116,30 +123,35 @@ class DrawTools:
             rect_id = self.canvas.create_rectangle(x1 - _SNAP_SIZE, y1, x2 + _SNAP_SIZE, y2, fill=box_color, outline="") #TODO fix this up a bit
             self.canvas.tag_raise(text_id, rect_id)
 
-    def logic_gate(self, x, y, snap_object, bits=None):
-        bits = bits or [0, 0, 0]
-        so_copy = copy.deepcopy(snap_object)
-        label_color = None
 
-        if bits[-1] == 1:
-            so_copy.load_as_active()
-            label_color = so_copy.active_label_color
+
+
+    def logic_gate(self, x, y, snap_object, bits):
+        sc = copy.deepcopy(snap_object)
+
+        if sc.has_single_input:
+            self.__layer_rectangles(x1=x, y1=y, x2=x + 2, y2=y + 2, snap_object=sc)
+            self.__layer_rectangles(x1=x, y1=y, x2=x + 2, y2=y + 2, snap_object=sc)
+            self.terminal_text(x + 1, y + 2, sc.label, sc.label_color, bump_x=0, bump_y=-5)
+            self.switch(x + 1, y, snap_object.input_a, bit=bits[0])
+            self.switch(x + 1, y + 2, snap_object.output, bit=bits[1])
         else:
-            so_copy.load_as_inactive()
-            label_color = so_copy.inactive_label_color
+            self.__layer_rectangles(x1=x, y1=y, x2=x + 3, y2=y + 2, snap_object=sc)
+            self.__layer_rectangles(x1=x, y1=y, x2=x + 3, y2=y + 2, snap_object=sc)
+            self.terminal_text(x + 1, y + 2, sc.label, sc.label_color, bump_x=12, bump_y=-5)
+            self.switch(x, y, snap_object.input_a, bit=bits[0], alignments=['', 'NW', ''])
+            self.switch(x + 3, y, snap_object.input_b, bit=bits[1], alignments=['', 'NE', ''])
+            self.switch(x + 1, y + 2, snap_object.output, bit=bits[2], alignments=['', 'ES', 'E'])
+            self.switch(x + 2, y + 2, snap_object.output, bit=bits[2], alignments=['', 'WS', 'W'])
 
-        self.__layer_rectangles(x1=x, y1=y, x2=x + 3, y2=y + 2, snap_object=so_copy)
-        self.__layer_rectangles(x1=x, y1=y, x2=x + 3, y2=y + 2, snap_object=so_copy)
-        self.terminal_text(x + 1, y + 2, so_copy.label, label_color, bump_x=12, bump_y=-5)
-        self.switch(x, y, snap_object.switch_a, bit=bits[0], alignments=['NW', 'NW', 'N'])
-        self.switch(x + 3, y, snap_object.switch_b, bit=bits[1], alignments=['NE', 'NE', 'N'])
-        self.switch(x + 1, y + 2, snap_object.switch_c, bit=bits[2], alignments=['', 'SE', 'SE'])
-        self.switch(x + 2, y + 2, snap_object.switch_c, bit=bits[2], alignments=['', 'SW', 'SW'])
+
+
+
 
     def draw_free_lines(self, snap_object, nodes):
         sc = copy.deepcopy(snap_object)
 
-        for _sc in [sc.outer_line, sc]:
+        for _sc in [sc.outer_line, sc.inner_line]:
             index = 0
 
             while index + 1 in nodes:
@@ -156,20 +168,6 @@ class DrawTools:
                 self.__layer_rectangles(x1=x1, y1=y1, x2=x2, y2=y2, snap_object=_sc)
 
                 index += 1
-
-    # def hkiac(self, x, y, tk, img):
-    #     x_coord = 1440
-    #     y_coord = 20
-    #
-    #     label = tk.Label(
-    #         root,
-    #         image=tk_img,
-    #         borderwidth=0,
-    #         highlightthickness=0,
-    #         padx=0,
-    #         pady=0
-    #     )
-    #     label.place(x=x_coord, y=y_coord)
 
     @staticmethod
     def _snap(bucket):

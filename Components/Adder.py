@@ -22,8 +22,7 @@ class Adder:
             return (a or b) and not (a and b)
 
         def _full_adder(a, b, cb_in):
-            if self.inverted:
-                b = not b
+            if self.inverted: b = not b
 
             s = _xor(_xor(a, b), cb_in)
             self.carry_out = ((_xor(a, b) * 1) and cb_in) or ((a * 1) and b) * 1

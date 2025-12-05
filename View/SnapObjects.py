@@ -1,38 +1,30 @@
-from Util.constants import Constants
-from View.Palette import (
-    WHITE,
-    GREY_LIGHT,
-    BLACK,
-    GREY_DARKER,
-    RED,
-    LIGHT_BLUE,
-    PURPLE,
-    YELLOW,
-    GREEN,
-    ORANGE,
-    GREY,
-    GREY_DARK, VERY_LIGHT_GREY, GREY_1, lime_green, dark_olive, almost_black, BLUE, TEST_RED
-)
+from View.Palette import *
 
-#TODO A lot of the exact same method signature. Add inheritance. No rush. Just whenever
+class SnapObject:
+    def __init__(self, offsets=None, colors=None):
+        self.offsets = offsets
+        self.colors = colors
+
 
 class FreeLines:
-    class OuterLine:
+    class InnerLine(SnapObject):
+        def __init__(self, color):
+            super().__init__([7], [color])
+
+    class OuterLine(SnapObject):
         def __init__(self):
-            self.colors = [BLACK]
-            self.offsets = [0]
+            super().__init__([0], [BLACK])
 
     def __init__(self, color):
-        self.colors = [color]
-        self.offsets = [7]
+        self.inner_line = FreeLines.InnerLine(color)
         self.outer_line = FreeLines.OuterLine()
 
-class SwitchBoard:
+
+class SwitchBoard(SnapObject):
     def __init__(self, active_colors, inactive_colors):
-        self.colors = None
+        super().__init__([0, 4, 9])
         self.active_colors = active_colors
         self.inactive_colors = inactive_colors
-        self.offsets = [0, 4, 9]
         self.load_as_active()
 
     def load_as_active(self):
@@ -40,22 +32,21 @@ class SwitchBoard:
     def load_as_inactive(self):
         self.colors = self.inactive_colors
 
-class SwitchMapper:
-    class MapperSelector:
+
+class SwitchMapper(SnapObject):
+    class MapperSelector(SnapObject):
         def __init__(self, colors):
-            self.colors = colors
-            self.offsets = [0, 4, 10]
+            super().__init__([0, 4, 10], colors)
 
     def __init__(self, active_colors, inactive_colors, switch_board_input, selector):
-        self.colors = None
-        self.offsets = [0, 9]
+        super().__init__([0, 9])
         self.active_colors = active_colors
         self.inactive_colors = inactive_colors
         self.switch_board_input = switch_board_input
         self.mapper_selector_none = SwitchBoard(selector, selector)
         self.selector = {
-            'left': SwitchMapper.MapperSelector(selector[:2] + [WHITE]),
-            'right': SwitchMapper.MapperSelector(selector[:1] + [BLACK, WHITE])
+            'left': SwitchMapper.MapperSelector(selector[:2] + [WHITE]), #TODO left and right will be restrictive verbiage for the io panel
+            'right': SwitchMapper.MapperSelector(selector[:1] + [BLACK, WHITE]) #TODO on that note, this might be better as its own switch type?
         }
         self.load_as_active()
 
@@ -65,14 +56,13 @@ class SwitchMapper:
     def load_as_inactive(self):
         self.colors = self.inactive_colors
 
-#TODO less hardcoding in here
-class LogicGate:
-    class Switch:
-        def __init__(self, active_colors, inactive_colors, alignments):
-            self.colors = None
-            self.offsets = [0, 7, 7]
-            self.active_colors = active_colors
-            self.inactive_colors = inactive_colors
+
+class LogicGate(SnapObject):
+    class GateSwitch(SnapObject):
+        def __init__(self, alignments):
+            super().__init__([0, 7, 7])
+            self.active_colors = [GREY_DARK, BLACK, WHITE]
+            self.inactive_colors = [GREY_DARK, BLACK, BLACK]
             self.alignments = alignments
             self.load_as_inactive()
 
@@ -82,24 +72,41 @@ class LogicGate:
         def load_as_inactive(self):
             self.colors = self.inactive_colors
 
-    def __init__(self, active_label_color, inactive_label_color, active_colors, inactive_colors, label):
-        self.colors = None
-        self.offsets = [0, 7]
-        self.active_label_color = active_label_color
-        self.inactive_label_color = inactive_label_color
-        self.active_colors = active_colors
-        self.inactive_colors = inactive_colors
-        self.switch_a = LogicGate.Switch([GREY_DARK, BLACK, WHITE], [GREY_DARK, BLACK, BLACK], ['NE', 'NE', 'E'])
-        self.switch_b = LogicGate.Switch([GREY_DARK, BLACK, WHITE], [GREY_DARK, BLACK, BLACK], ['NW', 'NW', 'W']) #TODO remove these alignments from class
-        self.switch_c = LogicGate.Switch([GREY_DARK, BLACK, WHITE], [GREY_DARK, BLACK, BLACK], ['E', 'E', 'E'])
+    def __init__(self):
+        super().__init__([0, 7], [GREY_DARK, BLACK])
+        self.input_a = None
+        self.input_b = None
+        self.output = None
+        self.label_color = GREY_LIGHT
+        self.label = ""
+        self.has_single_input = None
+
+    def set_as_not(self):
+        self.input_a = LogicGate.GateSwitch(['N', 'N', 'N'])
+        self.output = LogicGate.GateSwitch(['E', 'E', 'E'])
+        self.label = "NOT"
+        self.has_single_input = True
+        return self
+
+    def _build_double_input(self, label):
+        self.input_a = LogicGate.GateSwitch(['NE', 'NE', 'E'])
+        self.input_b = LogicGate.GateSwitch(['NW', 'NW', 'W'])
+        self.output = LogicGate.GateSwitch(['E', 'E', 'E'])
         self.label = label
-        self.load_as_active()
+        self.has_single_input = False
 
-    def load_as_active(self):
-        self.colors = self.active_colors
+    def set_as_or(self):
+        self._build_double_input("OR")
+        return self
 
-    def load_as_inactive(self):
-        self.colors = self.inactive_colors
+    def set_as_and(self):
+        self._build_double_input("AND")
+        return self
+
+    def set_as_xor(self):
+        self._build_double_input("XOR")
+        return self
+
 
 class Panel:
     class Title:
@@ -127,7 +134,7 @@ REGISTER_AB_SWITCH  =   SwitchBoard([TEST_RED, BLACK, WHITE], [TEST_RED, BLACK, 
 REGISTER_C_SWITCH   =SwitchBoard([ORANGE, BLACK, WHITE], [ORANGE, BLACK, BLACK])
 FLAG_SWITCH         =   SwitchBoard([ORANGE, BLACK, WHITE], [ORANGE, BLACK, BLACK])
 # PERIPHERAL_SWITCH   =   SwitchBoard([ORANGE, BLACK, BLACK])
-COUNTER_SWITCH      =   SwitchBoard([GREY, BLACK, WHITE], [GREY, BLACK, BLACK])
+COUNTER_SWITCH      =   SwitchBoard([GREEN, BLACK, WHITE], [GREEN, BLACK, BLACK])
 CARRY_SWITCH        =   SwitchBoard([PURPLE, BLACK, WHITE], [PURPLE, BLACK, BLACK])
 
 INSTRUCTION_SWITCH_MAPPER   =   SwitchMapper([BLACK, BLACK], [BLACK, WHITE], COUNTER_SWITCH, [BLACK, GREY_DARK, GREY_DARK])
@@ -135,20 +142,20 @@ MEMORY_SWITCH_MAPPER        =   SwitchMapper([BLACK, BLACK], [BLACK, BLUE], MEMO
 REGISTER_SWITCH_MAPPER      =   SwitchMapper([BLACK, BLACK], [BLACK, RED], COUNTER_SWITCH, [BLACK, GREY_DARK, GREY_DARK])
 OPCODE_SWITCH_MAPPER        =   SwitchMapper([BLACK, BLACK], [BLACK, GREEN], OPCODE_SWITCH, [BLACK, GREY_DARK, GREY_DARK])
 
-#TODO lot of args with perfect parity in this one. Also make the text class setters like in the Tile class
-LOGIC_GATE_XOR  =   LogicGate(WHITE, BLACK,[GREY_DARK, BLACK],[GREY_DARK, BLACK],"XOR")
-LOGIC_GATE_AND  =   LogicGate(WHITE, BLACK,[GREY_DARK, BLACK],[GREY_DARK, BLACK], "AND")
-LOGIC_GATE_OR   =   LogicGate(WHITE, BLACK, [GREY_DARK, BLACK],[GREY_DARK, BLACK], "OR")
+LOGIC_GATE_XOR  =   LogicGate().set_as_xor()
+LOGIC_GATE_AND  =   LogicGate().set_as_and()
+LOGIC_GATE_OR   =   LogicGate().set_as_or()
+LOGIC_GATE_NOT  =   LogicGate().set_as_not()
 
 ALU_PANEL           =   Panel([GREY_LIGHT, BLACK, GREY_LIGHT, BLACK], 'ARITHMETIC LOGIC UNIT', WHITE)
 MEMORY_PANEL        =   Panel([BLUE, BLACK, BLUE, BLACK], 'MEMORY', LIGHT_BLUE)
 REGISTER_PANEL      =   Panel([RED, BLACK, RED, BLACK], 'REGISTERS', TEST_RED)
 HKIAC_PANEL         =   Panel([WHITE, BLACK, WHITE, BLACK], None, None)
-FLAG_PANEL          =   Panel([PURPLE, BLACK, PURPLE, BLACK], 'FLAGS', "violet")
+FLAG_PANEL          =   Panel([GREY_LIGHT, BLACK, GREY_LIGHT, BLACK], 'FLAGS', "violet")
 INSTRUCTION_PANEL   =   Panel([GREY_LIGHT, BLACK, GREY_LIGHT, BLACK], 'MACHINE INSTRUCTIONS', WHITE)
 OPCODE_PANEL        =   Panel([GREEN, BLACK, GREEN, BLACK], 'CONTROL UNIT', "lime")
-IO_PANEL            =   Panel([WHITE, BLACK, WHITE, BLACK], None, None)
 BLACKOUT            =   Panel([BLACK, BLACK, BLACK, BLACK], None, None)
+IO_PANEL            =   Panel([BLACK, GREY_DARK, GREY_DARK, GREY_DARK], None, None)
 
 # TODO i think separating coordinates to the main file is good. This class should only describe object properties. Not their 'moldable' layout
 

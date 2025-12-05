@@ -1,10 +1,19 @@
 WHITE           =   "#ffffff"
-BLACK           =   "#000000"
-GREY_DARKER     =   "#111111"
-GREY_DARK       =   "#333333"
-GREY            =   "#444444"
+GREY_LIGHTER    =   "#aaaaaa"
 GREY_LIGHT      =   "#555555"
-VERY_LIGHT_GREY =   "#aaaaaa"
+GREY            =   "#444444"
+GREY_DARK       =   "#333333"
+GREY_DARKER     =   "#111111"
+BLACK           =   "#000000"
+
+
+
+
+
+
+
+
+
 GREY_1          =   "#cccccc"
 LIGHT_BLUE      =   "#3498db"
 RED             =   "red"

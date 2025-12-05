@@ -15,7 +15,7 @@ from Components.Memory import Memory
 from PIL import Image
 import View.DrawTools as DrawTools
 import View.SnapObjects as SnapObjects
-from View.Palette import WHITE, GREEN, TEST_RED, LIGHT_BLUE, ORANGE
+from View.Palette import WHITE, GREEN, TEST_RED, LIGHT_BLUE, ORANGE, PURPLE
 
 # from View.SnapObjects import SPIRAL_FREE_LINE
 
@@ -32,7 +32,7 @@ current_instruction_index = 0
 root = tk.Tk()
 root.title("H.K.I.A.C.")
 root.resizable(False, False)
-canvas = tk.Canvas(root, width=1425, height=1200, bg="black")
+canvas = tk.Canvas(root, width=1290, height=780, bg="black")
 canvas.pack()
 
 instruction_switch_layout = []
@@ -47,16 +47,16 @@ for i, width in enumerate(Constants.INSTRUCTION_WIDTHS):
         instruction_switch_layout.append(INSTRUCTION_SWITCHES[i])
 
 
-hkiac_img = Image.open("resources/hkiac.png")
+hkiac_img = Image.open("resources/hkiacartsy.png")
 tk_img = ImageTk.PhotoImage(hkiac_img)
 
 
 def draw_screen():
     canvas.delete("all")
 
-    def draw_gi_joe():
-        x_coord = 1263
-        y_coord = 53
+    def draw_hkiac_panel(x, y):
+        x_coord = x
+        y_coord = y
 
         label = tk.Label(
             root,
@@ -66,13 +66,7 @@ def draw_screen():
             padx=0,
             pady=0
         )
-        label.place(x=x_coord, y=y_coord)
-
-    def draw_hkiac_panel(x, y):
-        x_coord = x
-        y_coord = y
-
-        draw.panel(x_coord, y_coord, x_coord + 18, y_coord + 7, SnapObjects.HKIAC_PANEL)
+        label.place(x=27, y=570)
 
     def draw_hints(): pass
         # draw.terminal_text(35, 3, f"[{Arrows.UP}][{Arrows.DOWN}]", 'WHITE')
@@ -80,78 +74,105 @@ def draw_screen():
     def draw_opcode_panel(x,y):
         x_coord = x
         y_coord = y
+        op_code_text_x = x_coord + 6
+        op_code_text_y = y_coord + 2
 
         draw.panel(x_coord, y_coord, x_coord + 8, y_coord + 10, SnapObjects.OPCODE_PANEL)
 
         TEMP = [0, 0, 1]
-        draw.switch_mapper_board(x_coord, y_coord + 1, TEMP, SnapObjects.OPCODE_SWITCH_MAPPER)
+        # draw.switch_mapper_board(x_coord, y_coord + 1, TEMP, SnapObjects.OPCODE_SWITCH_MAPPER)
 
         for i, opcode in enumerate(Constants.OPCODE_ORDER):
             opcode = opcode + ((3 - len(opcode)) * ' ')
-            draw.terminal_text(x_coord + 6, 3 + i, f"[{opcode}]", "lime", bump_y=-5)
+            draw.terminal_text(op_code_text_x, op_code_text_y + i, f"[{opcode}]", "lime", bump_y=-5)
 
-        null_opcodes = 2 ** Constants.OP_CODE_INSTRUCTION_SIZE - len(Constants.OPCODE_ORDER)
-        available_opcodes = 2 ** Constants.OP_CODE_INSTRUCTION_SIZE
-
-        for i in range(null_opcodes, available_opcodes):
-            null_opcode = 3 * ' '
-            draw.terminal_text(x_coord + 6, 3 + i, f"[{null_opcode}]", "lime", bump_y=-5)
+        # null_opcodes = 2 ** Constants.OP_CODE_INSTRUCTION_SIZE - len(Constants.OPCODE_ORDER)
+        # available_opcodes = 2 ** Constants.OP_CODE_INSTRUCTION_SIZE
+        #
+        # for i in range(null_opcodes, available_opcodes):
+        #     null_opcode = 3 * ' '
+        #     draw.terminal_text(x_coord + 6, 3 + i, f"[{null_opcode}]", "lime", bump_y=-5)
 
     def draw_alu_panel(x, y): #TODO segment the individual groupings into nested methods. Do the same elsewhere
         x_coord = x
         y_coord = y
         gate_x = x_coord + 1
-        gate_y = y_coord + 10
-        alu_input_x = x_coord + 9
+        gate_y = y_coord + 12
+        alu_input_x = x_coord + 1
         alu_input_y = y_coord + 1
+        alu_output_x = x_coord + 5
+        alu_output_y = y_coord + 22
+        carry_x = x_coord + 12
+        carry_y = y_coord + 9
 
-        draw.panel(x_coord, y_coord, x_coord + 14, y_coord + 23, SnapObjects.ALU_PANEL)
+        draw.panel(x_coord, y_coord, x_coord + 14, y_coord + 24, SnapObjects.ALU_PANEL)
 
-        register_a = [0, 0, 0, 0, 0]
+        register_a = [0, 0, 0, 0, 1]
         register_b = [0, 1, 1, 1, 0]
-        carry = [1, 0]
-        register_a_switch = copy.deepcopy(SnapObjects.REGISTER_AB_SWITCH)
-        register_b_switch = copy.deepcopy(SnapObjects.REGISTER_AB_SWITCH)
-        carry_switch = copy.deepcopy(SnapObjects.CARRY_SWITCH)
 
-        alu_inputs = [register_a, register_b, carry]
-        switch_styles = [register_a_switch, register_b_switch, carry_switch]
+        alu_inputs = [register_a, register_b]
 
-        for i, (alu_input, switch_style) in enumerate(zip(alu_inputs, switch_styles)):
+        for i, alu_input in enumerate(alu_inputs):
             for j, bit in enumerate(alu_input):
                 switch_value = bit == 1
-                if j > 0: switch_style = SnapObjects.SWITCH
+                switch_style = SnapObjects.REGISTER_AB_SWITCH if (j == len(alu_input) - 1) else SnapObjects.SWITCH
                 draw.switch(alu_input_x + j, alu_input_y + i, switch_style, switch_value)
+
+        register_c = [0, 1, 1, 1, 0]
+        for i, bit in enumerate(register_c):
+            switch_value = bit == 1
+            switch_style = SnapObjects.REGISTER_C_SWITCH if i == 0 else SnapObjects.SWITCH
+            draw.switch(alu_output_x + i, alu_output_y, switch_style, switch_value)
+
+        carry = [1, 0]
+        for i, bit in enumerate(carry):
+            switch_value = bit == 1
+            switch_style = SnapObjects.CARRY_SWITCH if i == 0 else SnapObjects.SWITCH
+            draw.switch(carry_x + i, carry_y, switch_style, switch_value)
 
         _carry_in = {
             0: {'x': gate_x + 4, 'y': gate_y + 2},
             1: {'x': gate_x + 4, 'y': gate_y - 2},
             2: {'x': gate_x + 11, 'y': gate_y - 2},
-            3: {'x': gate_x + 11, 'y': gate_y + 2},
+            3: {'x': gate_x + 11, 'y': gate_y + 2}
+        }
+        _carry_out = {
+            0: {'x': gate_x + 10, 'y': gate_y + 6},
+            1: {'x': gate_x + 10, 'y': gate_y + 8},
+            2: {'x': gate_x + 12, 'y': gate_y + 8},
+            3: {'x': gate_x + 12, 'y': gate_y - 2}
         }
         _a = {
             0: {'x': gate_x, 'y': gate_y + 2},
             1: {'x': gate_x, 'y': gate_y - 4},
             2: {'x': gate_x + 6, 'y': gate_y - 4},
-            3: {'x': gate_x + 6, 'y': gate_y - 1},
+            3: {'x': gate_x + 6, 'y': gate_y - 1}
         }
         _b = {
             0: {'x': gate_x + 3, 'y': gate_y + 2},
             1: {'x': gate_x + 3, 'y': gate_y - 3},
-            2: {'x': gate_x + 9, 'y': gate_y - 3},
-            3: {'x': gate_x + 9, 'y': gate_y - 1},
+            2: {'x': gate_x + 8, 'y': gate_y - 3},
+            3: {'x': gate_x + 8, 'y': gate_y - 11},
+            4: {'x': gate_x + 5, 'y': gate_y - 11},
+            5: {'x': gate_x + 8, 'y': gate_y - 11},
+            6: {'x': gate_x + 8, 'y': gate_y - 3},
+            7: {'x': gate_x + 9, 'y': gate_y - 3},
+            8: {'x': gate_x + 9, 'y': gate_y - 1}
         }
 
         draw.draw_free_lines(SnapObjects.INPUT_A_FREELINE, _a)
         draw.draw_free_lines(SnapObjects.INPUT_B_FREELINE, _b)
         draw.draw_free_lines(SnapObjects.CARRY_IN_FREELINE, _carry_in)
+        draw.draw_free_lines(SnapObjects.CARRY_IN_FREELINE, _carry_out)
 
         gate_row = 3
-        draw.logic_gate(gate_x + 6, gate_y + (0 * gate_row), SnapObjects.LOGIC_GATE_XOR, [0, 0, 0])
-        draw.logic_gate(gate_x + 8, gate_y + (1 * gate_row), SnapObjects.LOGIC_GATE_XOR, [0, 0, 0])
-        draw.logic_gate(gate_x + 4, gate_y + (1 * gate_row), SnapObjects.LOGIC_GATE_AND, [0, 0, 0])
-        draw.logic_gate(gate_x + 0, gate_y + (1 * gate_row), SnapObjects.LOGIC_GATE_AND, [0, 0, 0])
-        draw.logic_gate(gate_x + 2, gate_y + (2 * gate_row), SnapObjects.LOGIC_GATE_OR, [0, 0, 0])
+        draw.logic_gate(gate_x + 3, gate_y - 8, SnapObjects.LOGIC_GATE_NOT, [0, 1])
+        draw.logic_gate(gate_x + 6, gate_y + (0 * gate_row), SnapObjects.LOGIC_GATE_XOR, [1,1,1])
+        draw.logic_gate(gate_x + 8, gate_y + (1 * gate_row), SnapObjects.LOGIC_GATE_XOR, [1,1,1])
+        draw.logic_gate(gate_x + 4, gate_y + (1 * gate_row), SnapObjects.LOGIC_GATE_AND, [1,1,1])
+        draw.logic_gate(gate_x + 0, gate_y + (1 * gate_row), SnapObjects.LOGIC_GATE_AND, [1,1,1])
+        draw.logic_gate(gate_x + 2, gate_y + (2 * gate_row), SnapObjects.LOGIC_GATE_OR, [1,1,1])
+
 
     def draw_memory_panel(x, y): #TODO this is very static. Need it to be malleable, rubbery, maybe flubbery
         x_coord = x
@@ -206,16 +227,27 @@ def draw_screen():
         x_coord = x
         y_coord = y
 
-        draw.panel(x_coord, y_coord, x_coord + 3, y_coord + 12, SnapObjects.IO_PANEL)
-        # draw.draw_free_lines(SPIRAL_FREE_LINE)
+
+        draw.panel(x_coord, y_coord, x_coord + 24, y_coord + 1, SnapObjects.IO_PANEL)
+
 
     def draw_flag_panel(x, y):
         x_coord = x
         y_coord = y
 
-        draw.panel(x_coord, y_coord, x_coord + 5, y_coord + 12, SnapObjects.FLAG_PANEL)
+        dummy_bit_Z = 0
+        dummy_bit_OV = 1
+        dummy_jump = 1
 
-        draw.logic_gate(x_coord + 1, y_coord + 5, SnapObjects.LOGIC_GATE_OR, [1, 0, 1])
+        draw.panel(x_coord, y_coord, x_coord + 6, y_coord + 6, SnapObjects.FLAG_PANEL)
+        draw.logic_gate(x_coord + 1, y_coord + 2, SnapObjects.LOGIC_GATE_OR, [1, 0, 1])
+        draw.switch(x_coord + 1, y_coord + 1, SnapObjects.CARRY_SWITCH, dummy_bit_OV)
+        draw.switch(x_coord + 4, y_coord + 1, SnapObjects.REGISTER_C_SWITCH, dummy_bit_Z)
+        draw.switch(x_coord + 2, y_coord + 5, SnapObjects.OPCODE_SWITCH, dummy_jump)
+
+        draw.terminal_text(x_coord + 2, y_coord + 2, 'OV', PURPLE, bump_x=7, bump_y=-4)
+        draw.terminal_text(x_coord + 5, y_coord + 2, 'Z', ORANGE, bump_x=7, bump_y=-4)
+        draw.terminal_text(x_coord + 3, y_coord + 6, 'JMP', GREEN, bump_x=7, bump_y=-4)
 
     def draw_instruction_panel(x, y):
         x_coord = x
@@ -255,16 +287,15 @@ def draw_screen():
 
 
     draw = DrawTools.DrawTools(canvas)
-    draw_gi_joe()
-    draw_hkiac_panel(33, 1)
+    draw_hkiac_panel(1, 10)
     draw_instruction_panel(1, 1)
     draw_hints()
-    draw_alu_panel(32, 12)
-    draw_memory_panel(1, 21)
-    draw_register_panel(15, 21)
-    draw_flag_panel(26, 21)
-    draw_opcode_panel(22,1)
-    # draw_io_panel(49,21)
+    draw_alu_panel(32, 3)
+    draw_memory_panel(18, 21)
+    draw_register_panel(22, 15)
+    draw_flag_panel(10, 21)
+    draw_opcode_panel(22,3)
+    draw_io_panel(22,0)
 
 
 
