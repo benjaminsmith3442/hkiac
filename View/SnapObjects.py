@@ -1,9 +1,17 @@
 from View.Palette import *
 
 class SnapObject:
-    def __init__(self, offsets=None, colors=None):
+    def __init__(self, offsets=None, colors=None, alignments=None, inactive_colors=None):
         self.offsets = offsets
         self.colors = colors
+        self.alignments = alignments or [''] * len(offsets)
+        self.active_colors = colors
+        self.inactive_colors = inactive_colors
+
+    def load_as_active(self):
+        self.colors = self.active_colors
+    def load_as_inactive(self):
+        self.colors = self.inactive_colors
 
 
 class FreeLines:
@@ -21,56 +29,44 @@ class FreeLines:
 
 
 class SwitchBoard(SnapObject):
-    def __init__(self, active_colors, inactive_colors):
-        super().__init__([0, 4, 9])
-        self.active_colors = active_colors
-        self.inactive_colors = inactive_colors
+    def __init__(self, colors, inactive_colors):
+        super().__init__(
+            offsets=[0, 4, 9],
+            colors=colors,
+            inactive_colors=inactive_colors
+        )
         self.load_as_active()
-
-    def load_as_active(self):
-        self.colors = self.active_colors
-    def load_as_inactive(self):
-        self.colors = self.inactive_colors
 
 
 class SwitchMapper(SnapObject):
     class MapperSelector(SnapObject):
-        def __init__(self, colors):
-            super().__init__([0, 4, 10], colors)
+        def __init__(self, colors, alignments):
+            super().__init__(
+                offsets=[0, 4, 10],
+                colors=colors,
+                alignments=alignments
+            )
 
-    def __init__(self, active_colors, inactive_colors, switch_board_input, selector):
-        super().__init__([0, 9])
-        self.active_colors = active_colors
-        self.inactive_colors = inactive_colors
+    def __init__(self, colors, inactive_colors, switch_board_input, selector):
+        super().__init__(
+            offsets=[0, 9],
+            colors=colors,
+            inactive_colors=inactive_colors
+        )
         self.switch_board_input = switch_board_input
         self.mapper_selector_none = SwitchBoard(selector, selector)
         self.selector = {
-            'left': SwitchMapper.MapperSelector(selector[:2] + [WHITE]), #TODO left and right will be restrictive verbiage for the io panel
-            'right': SwitchMapper.MapperSelector(selector[:1] + [BLACK, WHITE]) #TODO on that note, this might be better as its own switch type?
+            'left': SwitchMapper.MapperSelector(selector[:2] + [WHITE], ['E'] * 3),
+            'right': SwitchMapper.MapperSelector(selector[:1] + [BLACK, WHITE], ['W'] * 3)
         }
         self.load_as_active()
 
-    def load_as_active(self):
-        self.colors = self.active_colors
 
-    def load_as_inactive(self):
-        self.colors = self.inactive_colors
-
-
-class LogicGate(SnapObject):
+class LogicGate(SnapObject): #TODO you also left off here. Keep going champion
     class GateSwitch(SnapObject):
         def __init__(self, alignments):
-            super().__init__([0, 7, 7])
-            self.active_colors = [GREY_DARK, BLACK, WHITE]
-            self.inactive_colors = [GREY_DARK, BLACK, BLACK]
-            self.alignments = alignments
+            super().__init__([0, 7, 7], colors=[GREY_DARK, BLACK, WHITE], inactive_colors=[GREY_DARK, BLACK, BLACK], alignments=alignments)
             self.load_as_inactive()
-
-        def load_as_active(self):
-            self.colors = self.active_colors
-
-        def load_as_inactive(self):
-            self.colors = self.inactive_colors
 
     def __init__(self):
         super().__init__([0, 7], [GREY_DARK, BLACK])
@@ -89,8 +85,8 @@ class LogicGate(SnapObject):
         return self
 
     def _build_double_input(self, label):
-        self.input_a = LogicGate.GateSwitch(['NE', 'NE', 'E'])
-        self.input_b = LogicGate.GateSwitch(['NW', 'NW', 'W'])
+        self.input_a = LogicGate.GateSwitch(['', 'NW', ''])
+        self.input_b = LogicGate.GateSwitch(['', 'NE', ''])
         self.output = LogicGate.GateSwitch(['E', 'E', 'E'])
         self.label = label
         self.has_single_input = False
@@ -131,7 +127,7 @@ OPCODE_SWITCH       =   SwitchBoard([GREEN, BLACK, WHITE],[GREEN, BLACK, BLACK])
 MEMORY_SWITCH       =   SwitchBoard([LIGHT_BLUE, BLACK, WHITE], [LIGHT_BLUE, BLACK, BLACK])
 NUMERIC_SWITCH      =   SwitchBoard([WHITE, BLACK, WHITE], [WHITE, BLACK, BLACK])
 REGISTER_AB_SWITCH  =   SwitchBoard([TEST_RED, BLACK, WHITE], [TEST_RED, BLACK, BLACK])
-REGISTER_C_SWITCH   =SwitchBoard([ORANGE, BLACK, WHITE], [ORANGE, BLACK, BLACK])
+REGISTER_C_SWITCH   =   SwitchBoard([ORANGE, BLACK, WHITE], [ORANGE, BLACK, BLACK])
 FLAG_SWITCH         =   SwitchBoard([ORANGE, BLACK, WHITE], [ORANGE, BLACK, BLACK])
 # PERIPHERAL_SWITCH   =   SwitchBoard([ORANGE, BLACK, BLACK])
 COUNTER_SWITCH      =   SwitchBoard([GREEN, BLACK, WHITE], [GREEN, BLACK, BLACK])

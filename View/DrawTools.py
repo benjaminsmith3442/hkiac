@@ -13,15 +13,13 @@ class DrawTools:
     def __init__(self, canvas):
         self.canvas = canvas
 
-    def __layer_rectangles(self, x1=None, y1=None, x2=None, y2=None, snap_object=None, alignments=None):
-        alignments = alignments or [''] * len(snap_object.offsets)
-
+    def __layer_rectangles(self, x1=None, y1=None, x2=None, y2=None, snap_object=None):
         x1 = self._snap(x1)
         y1 = self._snap(y1)
         x2 = self._snap(x2)
         y2 = self._snap(y2)
 
-        for offset, color, alignment in zip(snap_object.offsets, snap_object.colors, alignments):
+        for offset, color, alignment in zip(snap_object.offsets, snap_object.colors, snap_object.alignments):
             offset_west = 0 if ('W' in alignment) else offset
             offset_east = 0 if ('E' in alignment) else offset
             offset_north = 0 if ('N' in alignment) else offset
@@ -34,13 +32,13 @@ class DrawTools:
                 fill=color
             )
 
-    def switch(self, x, y, snap_object, bit=0, alignments=None):
+    def switch(self, x, y, snap_object, bit=0, is_double_width=False):
         so_copy = copy.deepcopy(snap_object)
         if bit:
             so_copy.load_as_active()
         else:
             so_copy.load_as_inactive()
-        self.__layer_rectangles(x1=x, y1=y, x2=x, y2=y, snap_object=so_copy, alignments=alignments)
+        self.__layer_rectangles(x1=x, y1=y, x2=x, y2=y, snap_object=so_copy)
 
     def panel(self, x1, y1, x2, y2, snap_object):
         so_copy = copy.deepcopy(snap_object)
@@ -50,10 +48,8 @@ class DrawTools:
 
     def __mapper_selector(self, x, y, snap_object):
         so_copy = copy.deepcopy(snap_object)
-        east_alignments = ['E'] * len(so_copy['left'].offsets)
-        west_alignments = ['W'] * len(so_copy['right'].offsets)
-        self.__layer_rectangles(x1=x, y1=y, x2=x, y2=y, snap_object=so_copy['left'], alignments=east_alignments)
-        self.__layer_rectangles(x1=x+1, y1=y, x2=x+1, y2=y, snap_object=so_copy['right'], alignments=west_alignments)
+        self.__layer_rectangles(x1=x, y1=y, x2=x, y2=y, snap_object=so_copy['left'])
+        self.__layer_rectangles(x1=x+1, y1=y, x2=x+1, y2=y, snap_object=so_copy['right'])
 
     def __horizontal_mapper(self, x, y, snap_object, length, bit=0):
     #     so_copy = copy.deepcopy(snap_object)
@@ -139,9 +135,9 @@ class DrawTools:
             self.__layer_rectangles(x1=x, y1=y, x2=x + 3, y2=y + 2, snap_object=sc)
             self.__layer_rectangles(x1=x, y1=y, x2=x + 3, y2=y + 2, snap_object=sc)
             self.terminal_text(x + 1, y + 2, sc.label, sc.label_color, bump_x=12, bump_y=-5)
-            self.switch(x, y, snap_object.input_a, bit=bits[0], alignments=['', 'NW', ''])
-            self.switch(x + 3, y, snap_object.input_b, bit=bits[1], alignments=['', 'NE', ''])
-            self.switch(x + 1, y + 2, snap_object.output, bit=bits[2], alignments=['', 'ES', 'E'])
+            self.switch(x, y, snap_object.input_a, bit=bits[0])
+            self.switch(x + 3, y, snap_object.input_b, bit=bits[1])
+            self.switch(x + 1, y + 2, snap_object.output, bit=bits[2], alignments=['', 'ES', 'E']) #TODO you left off here. This logic should be converted to a rectangle
             self.switch(x + 2, y + 2, snap_object.output, bit=bits[2], alignments=['', 'WS', 'W'])
 
 
