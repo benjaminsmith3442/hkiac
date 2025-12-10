@@ -1,13 +1,7 @@
-from collections.abc import Container
-from tracemalloc import Snapshot
-
-from Util.constants import Constants
-from View.Palette import WHITE, GREY_DARK, BLACK
+from View.Palette import BLACK
 import copy
 
 _SNAP_SIZE = 27
-_PANEL_BUMP_X = 5
-_PANEL_BUMP_Y = -10
 
 class DrawTools:
     def __init__(self, canvas):
@@ -32,48 +26,54 @@ class DrawTools:
                 fill=color
             )
 
-    def switch(self, x, y, snap_object, bit=0, is_double_width=False):
-        so_copy = copy.deepcopy(snap_object)
+    def switch(self, x, y, snap_object, bit=0, is_gate_output_switch=False):
+        sc = copy.deepcopy(snap_object)
         if bit:
-            so_copy.load_as_active()
+            sc.load_as_active()
         else:
-            so_copy.load_as_inactive()
-        self.__layer_rectangles(x1=x, y1=y, x2=x, y2=y, snap_object=so_copy)
+            sc.load_as_inactive()
+
+        x_stretch = 1 if is_gate_output_switch else 0
+        self.__layer_rectangles(x1=x, y1=y, x2=x + x_stretch, y2=y, snap_object=sc)
+
+
+    def prong(self, x, y, snap_object, bit=0):
+        sc = copy.deepcopy(snap_object)
+
+        if bit == 0:
+            self.switch(x, y, sc, bit)
+            return
+
+        self.__layer_rectangles(x1=x, y1=y, x2=x, y2=y, snap_object=sc.selector['first_rectangle'])
+        self.__layer_rectangles(
+            x1=x + sc.next_x,
+            y1=y + sc.next_y,
+            x2=x + sc.next_x,
+            y2=y + sc.next_y,
+            snap_object=sc.selector['second_rectangle']
+        )
+
 
     def panel(self, x1, y1, x2, y2, snap_object):
-        so_copy = copy.deepcopy(snap_object)
-        self.__layer_rectangles(x1=x1, y1=y1, x2=x2, y2=y2, snap_object=so_copy)
-        if so_copy.title.text is not None:
-            self.terminal_text(x1 + 2, y1 + 1, so_copy.title.text, so_copy.title.text_color, bump_x=_PANEL_BUMP_X, bump_y=_PANEL_BUMP_Y, box_color=so_copy.title.box_color)
+        sc = copy.deepcopy(snap_object)
+        self.__layer_rectangles(x1=x1, y1=y1, x2=x2, y2=y2, snap_object=sc)
+        if sc.text is not None:
+            self.terminal_text(x1 + 2, y1 + 1, sc.text, sc.text_color, bump_x=5, bump_y=-10, is_title_bar_text=True)
 
-    def __mapper_selector(self, x, y, snap_object):
-        so_copy = copy.deepcopy(snap_object)
-        self.__layer_rectangles(x1=x, y1=y, x2=x, y2=y, snap_object=so_copy['left'])
-        self.__layer_rectangles(x1=x+1, y1=y, x2=x+1, y2=y, snap_object=so_copy['right'])
-
-    def __horizontal_mapper(self, x, y, snap_object, length, bit=0):
-    #     so_copy = copy.deepcopy(snap_object)
-    #     if not bit: so_copy.colors[-1] = GREY_DARK
-    #     x2 = x + length
-    #     self.__layer_rectangles(x1=x, y1=y, x2=x2, y2=y, snap_object=so_copy)
-        so_copy = copy.deepcopy(snap_object)
-        if bit:
-            so_copy.load_as_active()
-        else:
-            so_copy.load_as_inactive()
-        x2 = x + length
-        self.__layer_rectangles(x1=x, y1=y, x2=x2, y2=y, snap_object=so_copy)
 
     def __vertical_mapper(self, x, y, snap_object, length, bit=0):
-        so_copy = copy.deepcopy(snap_object)
+        sc = copy.deepcopy(snap_object)
         if bit:
-            so_copy.load_as_active()
+            sc.load_as_active()
         else:
-            so_copy.load_as_inactive()
+            sc.load_as_inactive()
         y2 = y + length
-        self.__layer_rectangles(x1=x, y1=y, x2=x, y2=y2, snap_object=so_copy)
+        self.__layer_rectangles(x1=x, y1=y, x2=x, y2=y2, snap_object=sc)
+
 
     def switch_mapper_board(self, x, y, input_bits, schema):
+        sc = copy.deepcopy(schema)
+
         x_start = x
         y_start = y
         output_bits = [0] * (2 ** len(input_bits))
@@ -81,14 +81,11 @@ class DrawTools:
         output_bits[output_index] = 1
 
         for i, bit in enumerate(input_bits):
-            self.switch(x_start + i + 1, y + len(output_bits), schema.switch_board_input, bit)
+            self.switch(x_start + i + 1, y + len(output_bits), sc.switch_board_input, bit)
 
         for i, bit in enumerate(output_bits):
             output_start_x = x_start + len(input_bits) + 1
-            self.switch(output_start_x, y + i, schema.mapper_selector_none, bit)
-
-            if bit == 1:
-                self.__mapper_selector(output_start_x, y + i, schema.selector)
+            self.prong(output_start_x, y + i, sc.selector, bit)
 
         for i in range(1, len(input_bits) + 1):
             x = i + x_start
@@ -98,28 +95,26 @@ class DrawTools:
 
             for j in range(rect_count):
                 bit_mapped = (j + input_bits[i - 1]) % 2 == 0
-                self.__vertical_mapper(x, y, schema, mapper_height - 1, bit_mapped)
+                self.__vertical_mapper(x, y, sc, mapper_height - 1, bit_mapped)
                 y += mapper_height
 
-    def terminal_text(self, x, y, text, color, bump_x=0, bump_y=0, box_color=None):
+
+    def terminal_text(self, x, y, text, color, bump_x=0, bump_y=0, is_title_bar_text=False, font_size=16):
         text_id = self.canvas.create_text(
             x * _SNAP_SIZE + bump_x,
             y * _SNAP_SIZE + bump_y,
             text=text,
-            font=("Terminal", 16, "bold"),
+            font=("Terminal", font_size, "bold"),
             fill=color,
             width=20 * len(text),
             anchor="sw",
             justify="left"
         )
 
-        if box_color is not None:
-            # self.canvas.create_rectangle()
+        if is_title_bar_text:
             x1, y1, x2, y2 = self.canvas.bbox(text_id)
-            rect_id = self.canvas.create_rectangle(x1 - _SNAP_SIZE, y1, x2 + _SNAP_SIZE, y2, fill=box_color, outline="") #TODO fix this up a bit
+            rect_id = self.canvas.create_rectangle(x1 - _SNAP_SIZE, y1, x2 + _SNAP_SIZE, y2, fill=BLACK, outline="")
             self.canvas.tag_raise(text_id, rect_id)
-
-
 
 
     def logic_gate(self, x, y, snap_object, bits):
@@ -137,11 +132,7 @@ class DrawTools:
             self.terminal_text(x + 1, y + 2, sc.label, sc.label_color, bump_x=12, bump_y=-5)
             self.switch(x, y, snap_object.input_a, bit=bits[0])
             self.switch(x + 3, y, snap_object.input_b, bit=bits[1])
-            self.switch(x + 1, y + 2, snap_object.output, bit=bits[2], alignments=['', 'ES', 'E']) #TODO you left off here. This logic should be converted to a rectangle
-            self.switch(x + 2, y + 2, snap_object.output, bit=bits[2], alignments=['', 'WS', 'W'])
-
-
-
+            self.switch(x + 1, y + 2, snap_object.output, bit=bits[2], is_gate_output_switch=True)
 
 
     def draw_free_lines(self, snap_object, nodes):
@@ -164,6 +155,7 @@ class DrawTools:
                 self.__layer_rectangles(x1=x1, y1=y1, x2=x2, y2=y2, snap_object=_sc)
 
                 index += 1
+
 
     @staticmethod
     def _snap(bucket):

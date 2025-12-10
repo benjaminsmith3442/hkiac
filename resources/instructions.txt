@@ -7,3 +7,7 @@ jmp 5
 mov 10
 str m2 r2
 ldr m2 r1
+jmp 5
+mov 14
+str m2 r2
+ldr m2 r1

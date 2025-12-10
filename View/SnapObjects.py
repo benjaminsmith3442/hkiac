@@ -1,6 +1,6 @@
 from View.Palette import *
 
-class SnapObject:
+class _SnapObject:
     def __init__(self, offsets=None, colors=None, alignments=None, inactive_colors=None):
         self.offsets = offsets
         self.colors = colors
@@ -15,11 +15,11 @@ class SnapObject:
 
 
 class FreeLines:
-    class InnerLine(SnapObject):
+    class InnerLine(_SnapObject):
         def __init__(self, color):
             super().__init__([7], [color])
 
-    class OuterLine(SnapObject):
+    class OuterLine(_SnapObject):
         def __init__(self):
             super().__init__([0], [BLACK])
 
@@ -28,18 +28,18 @@ class FreeLines:
         self.outer_line = FreeLines.OuterLine()
 
 
-class SwitchBoard(SnapObject):
-    def __init__(self, colors, inactive_colors):
+class SwitchBoard(_SnapObject):
+    def __init__(self, color):
         super().__init__(
             offsets=[0, 4, 9],
-            colors=colors,
-            inactive_colors=inactive_colors
+            colors=[color, BLACK, WHITE],
+            inactive_colors=[color, BLACK, BLACK]
         )
         self.load_as_active()
 
 
-class SwitchMapper(SnapObject):
-    class MapperSelector(SnapObject):
+class Selector(_SnapObject):
+    class HalfSelector(_SnapObject):
         def __init__(self, colors, alignments):
             super().__init__(
                 offsets=[0, 4, 10],
@@ -47,29 +47,74 @@ class SwitchMapper(SnapObject):
                 alignments=alignments
             )
 
-    def __init__(self, colors, inactive_colors, switch_board_input, selector):
+    def __init__(self, background_color=BLACK, switch_color=GREY_DARK, prong_color=WHITE):
+        super().__init__(
+            offsets=[0, 4, 9],
+            colors=[background_color, switch_color, switch_color]
+        )
+
+        self.__first_half_colors = [background_color, switch_color, prong_color]
+        self.__second_half_colors = [background_color, background_color, prong_color]
+        self.selector = {}
+        self.next_x = 0
+        self.next_y = 0
+
+    def _define_halves(self, first_half, second_half):
+        self.selector['first_rectangle'] = Selector.HalfSelector(self.__first_half_colors, [first_half, '', first_half])
+        self.selector['second_rectangle'] = Selector.HalfSelector(self.__second_half_colors, [second_half] * 3)
+
+    def aim_down(self):
+        self._define_halves('S', 'N')
+        self.next_y = 1
+        return self
+
+    def aim_up(self):
+        self._define_halves('N', 'S')
+        self.next_y = -1
+        return self
+
+    def aim_right(self):
+        self._define_halves('E', 'W')
+        self.next_x = 1
+        return self
+
+    def aim_left(self):
+        self._define_halves('W', 'E')
+        self.next_x = -1
+        return self
+
+    def load_as_active(self): pass
+    def load_as_inactive(self): pass
+
+
+class SwitchMapper(_SnapObject):
+    def __init__(self, color, switch_board_input):
         super().__init__(
             offsets=[0, 9],
-            colors=colors,
-            inactive_colors=inactive_colors
+            colors=[BLACK, BLACK],
+            inactive_colors=[BLACK, color]
         )
         self.switch_board_input = switch_board_input
-        self.mapper_selector_none = SwitchBoard(selector, selector)
-        self.selector = {
-            'left': SwitchMapper.MapperSelector(selector[:2] + [WHITE], ['E'] * 3),
-            'right': SwitchMapper.MapperSelector(selector[:1] + [BLACK, WHITE], ['W'] * 3)
-        }
+        self.selector = Selector().aim_right()
         self.load_as_active()
 
 
-class LogicGate(SnapObject): #TODO you also left off here. Keep going champion
-    class GateSwitch(SnapObject):
+class LogicGate(_SnapObject):
+    class GateSwitch(_SnapObject):
         def __init__(self, alignments):
-            super().__init__([0, 7, 7], colors=[GREY_DARK, BLACK, WHITE], inactive_colors=[GREY_DARK, BLACK, BLACK], alignments=alignments)
+            super().__init__(
+                [0, 7, 7],
+                colors=[GREY_DARK, BLACK, WHITE],
+                inactive_colors=[GREY_DARK, BLACK, BLACK],
+                alignments=alignments
+            )
             self.load_as_inactive()
 
     def __init__(self):
-        super().__init__([0, 7], [GREY_DARK, BLACK])
+        super().__init__(
+            [0, 7],
+            [GREY_DARK, BLACK]
+        )
         self.input_a = None
         self.input_b = None
         self.output = None
@@ -78,8 +123,8 @@ class LogicGate(SnapObject): #TODO you also left off here. Keep going champion
         self.has_single_input = None
 
     def set_as_not(self):
-        self.input_a = LogicGate.GateSwitch(['N', 'N', 'N'])
-        self.output = LogicGate.GateSwitch(['E', 'E', 'E'])
+        self.input_a = LogicGate.GateSwitch(['', 'N', ''])
+        self.output = LogicGate.GateSwitch(['', 'S', ''])
         self.label = "NOT"
         self.has_single_input = True
         return self
@@ -87,7 +132,7 @@ class LogicGate(SnapObject): #TODO you also left off here. Keep going champion
     def _build_double_input(self, label):
         self.input_a = LogicGate.GateSwitch(['', 'NW', ''])
         self.input_b = LogicGate.GateSwitch(['', 'NE', ''])
-        self.output = LogicGate.GateSwitch(['E', 'E', 'E'])
+        self.output = LogicGate.GateSwitch(['', 'S', ''])
         self.label = label
         self.has_single_input = False
 
@@ -104,58 +149,57 @@ class LogicGate(SnapObject): #TODO you also left off here. Keep going champion
         return self
 
 
-class Panel:
-    class Title:
-        def __init__(self, title_text, title_color):
-            self.colors = [BLACK] #TODO am i using this?
-            self.offsets = [0]    #TODO or this?
-            self.text = title_text
-            self.text_color = title_color
-            self.box_color = BLACK
+class Panel(_SnapObject):
+    def __init__(self, color=GREY, title_text=None, title_color=WHITE):
+        offsets = [0] if title_text is None else [0, 2, 14, 16]
+        colors = [color] if title_text is None else [color, BLACK, color, BLACK]
 
-    def __init__(self, colors, title_text, title_color):
-        self.colors = colors
-        self.offsets = [0, 2, 14, 16]
-        self.colors_panel = colors
-        self.title = Panel.Title(title_text, title_color)
+        super().__init__(
+            offsets=offsets,
+            colors=colors
+        )
 
-#TODO   a lot of these probably have static logic that can come from the initializer.
-#       Im looking at you Panel objects 0_0
-SWITCH              =   SwitchBoard([GREY, BLACK, WHITE], [GREY, BLACK, BLACK])
-SWITCH_INACTIVE     =   SwitchBoard([GREY_DARKER, BLACK, WHITE],[GREY_DARKER, BLACK, BLACK])
-OPCODE_SWITCH       =   SwitchBoard([GREEN, BLACK, WHITE],[GREEN, BLACK, BLACK])
-MEMORY_SWITCH       =   SwitchBoard([LIGHT_BLUE, BLACK, WHITE], [LIGHT_BLUE, BLACK, BLACK])
-NUMERIC_SWITCH      =   SwitchBoard([WHITE, BLACK, WHITE], [WHITE, BLACK, BLACK])
-REGISTER_AB_SWITCH  =   SwitchBoard([TEST_RED, BLACK, WHITE], [TEST_RED, BLACK, BLACK])
-REGISTER_C_SWITCH   =   SwitchBoard([ORANGE, BLACK, WHITE], [ORANGE, BLACK, BLACK])
-FLAG_SWITCH         =   SwitchBoard([ORANGE, BLACK, WHITE], [ORANGE, BLACK, BLACK])
-# PERIPHERAL_SWITCH   =   SwitchBoard([ORANGE, BLACK, BLACK])
-COUNTER_SWITCH      =   SwitchBoard([GREEN, BLACK, WHITE], [GREEN, BLACK, BLACK])
-CARRY_SWITCH        =   SwitchBoard([PURPLE, BLACK, WHITE], [PURPLE, BLACK, BLACK])
+        self.text = title_text
+        self.text_color = title_color
 
-INSTRUCTION_SWITCH_MAPPER   =   SwitchMapper([BLACK, BLACK], [BLACK, WHITE], COUNTER_SWITCH, [BLACK, GREY_DARK, GREY_DARK])
-MEMORY_SWITCH_MAPPER        =   SwitchMapper([BLACK, BLACK], [BLACK, BLUE], MEMORY_SWITCH, [BLACK, GREY_DARK, GREY_DARK])
-REGISTER_SWITCH_MAPPER      =   SwitchMapper([BLACK, BLACK], [BLACK, RED], COUNTER_SWITCH, [BLACK, GREY_DARK, GREY_DARK])
-OPCODE_SWITCH_MAPPER        =   SwitchMapper([BLACK, BLACK], [BLACK, GREEN], OPCODE_SWITCH, [BLACK, GREY_DARK, GREY_DARK])
+
+SWITCH              =   SwitchBoard(GREY)
+SWITCH_INACTIVE     =   SwitchBoard(GREY_DARKER)
+OPCODE_SWITCH       =   SwitchBoard(WHITE)
+JUMP_SWITCH         =   SwitchBoard(GREEN)
+MEMORY_SWITCH       =   SwitchBoard(TEAL)
+INPUT_SWITCH        =   SwitchBoard(TEAL)
+NUMERIC_SWITCH      =   SwitchBoard(GREY_LIGHTER)
+REGISTER_AB_SWITCH  =   SwitchBoard(RED)
+REGISTER_C_SWITCH   =   SwitchBoard(ORANGE)
+FLAG_SWITCH         =   SwitchBoard(ORANGE)
+COUNTER_SWITCH      =   SwitchBoard(GREEN)
+CARRY_SWITCH        =   SwitchBoard(PURPLE)
+ZERO_SWITCH         =   SwitchBoard(BLUE)
+
+INSTRUCTION_SWITCH_MAPPER   =   SwitchMapper(GREEN, COUNTER_SWITCH)
+MEMORY_SWITCH_MAPPER        =   SwitchMapper(TEAL, MEMORY_SWITCH)
+REGISTER_SWITCH_MAPPER      =   SwitchMapper(RED, REGISTER_AB_SWITCH)
 
 LOGIC_GATE_XOR  =   LogicGate().set_as_xor()
 LOGIC_GATE_AND  =   LogicGate().set_as_and()
 LOGIC_GATE_OR   =   LogicGate().set_as_or()
 LOGIC_GATE_NOT  =   LogicGate().set_as_not()
 
-ALU_PANEL           =   Panel([GREY_LIGHT, BLACK, GREY_LIGHT, BLACK], 'ARITHMETIC LOGIC UNIT', WHITE)
-MEMORY_PANEL        =   Panel([BLUE, BLACK, BLUE, BLACK], 'MEMORY', LIGHT_BLUE)
-REGISTER_PANEL      =   Panel([RED, BLACK, RED, BLACK], 'REGISTERS', TEST_RED)
-HKIAC_PANEL         =   Panel([WHITE, BLACK, WHITE, BLACK], None, None)
-FLAG_PANEL          =   Panel([GREY_LIGHT, BLACK, GREY_LIGHT, BLACK], 'FLAGS', "violet")
-INSTRUCTION_PANEL   =   Panel([GREY_LIGHT, BLACK, GREY_LIGHT, BLACK], 'MACHINE INSTRUCTIONS', WHITE)
-OPCODE_PANEL        =   Panel([GREEN, BLACK, GREEN, BLACK], 'CONTROL UNIT', "lime")
-BLACKOUT            =   Panel([BLACK, BLACK, BLACK, BLACK], None, None)
-IO_PANEL            =   Panel([BLACK, GREY_DARK, GREY_DARK, GREY_DARK], None, None)
+INPUT_PRONG     =   Selector(GREY_DARKISH, TEAL, LIGHT_BLUE).aim_down()
+OUTPUT_PRONG    =   Selector(GREY_DARKISH, ORANGE, YELLOW).aim_up()
 
-# TODO i think separating coordinates to the main file is good. This class should only describe object properties. Not their 'moldable' layout
+ALU_PANEL           =   Panel(title_text='A. L. U.')
+MEMORY_PANEL        =   Panel(title_text='M E M O R Y')
+REGISTER_PANEL      =   Panel(title_text='R E G I S T E R S')
+FLAG_PANEL          =   Panel(title_text='F L A G S')
+INSTRUCTION_PANEL   =   Panel(title_text='I N S T R U C T I O N S')
+BLACKOUT            =   Panel(color=BLACK)
+GREY_PANEL          =   Panel(color=GREY_DARKISH)
 
 CARRY_IN_FREELINE = FreeLines(PURPLE)
-INPUT_A_FREELINE = FreeLines(TEST_RED)
-INPUT_B_FREELINE = FreeLines(TEST_RED)
-
+INPUT_A_FREELINE = FreeLines(RED)
+INPUT_B_FREELINE = FreeLines(RED)
+REGISTER_2_FREELINE = FreeLines(ORANGE)
+ZERO_FLAG_FREELINE = FreeLines(BLUE)
+CARRY_FLAG_FREELINE = FreeLines(PURPLE)

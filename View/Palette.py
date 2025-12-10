@@ -3,28 +3,22 @@ GREY_LIGHTER    =   "#aaaaaa"
 GREY_LIGHT      =   "#555555"
 GREY            =   "#444444"
 GREY_DARK       =   "#333333"
+GREY_DARKISH    =   "#222222"
 GREY_DARKER     =   "#111111"
 BLACK           =   "#000000"
-
-
-
-
-
-
-
-
-
+TEAL          =   "teal"
 GREY_1          =   "#cccccc"
 LIGHT_BLUE      =   "#3498db"
 RED             =   "red"
-PURPLE          =   "purple"
+PURPLE          =   "purple" # "#BB55BB"
 GREEN           =   "green"
 YELLOW          =   "yellow"
 ORANGE          =   'orange'
-LIME            =   'lime'
+LIGHT_GREEN            =   'lightgreen'
 BLUE            =   'blue'
-TEST_RED        =   '#EE4B2B'
-
+TEST_RED        =   'brown'
+LIGHT_BROWN     = '#EE4B2B'
 lime_green      = "#32CD32"  # bright lime green
 dark_olive      = "#2E8B57"  # deeper, muted green
 almost_black    = "#012A0A"  # extremely dark green
+BROWN           = "brown"
